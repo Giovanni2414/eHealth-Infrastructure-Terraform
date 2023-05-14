@@ -98,8 +98,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
@@ -111,7 +111,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   depends_on = [azurerm_network_interface_security_group_association.nic_sg_association]
 }
 
-resource "azurerm_kubernetes_cluster" "aks" {
+/*resource "azurerm_kubernetes_cluster" "aks" {
   name                = "${var.prefix}-aks1"
   location            = azurerm_resource_group.main-rg.location
   resource_group_name = azurerm_resource_group.main-rg.name
@@ -133,11 +133,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
 }
 
 data "azurerm_kubernetes_cluster" "example" {
-  name                = azurerm_kubernetes_cluster.example.name
-  resource_group_name = "${var.prefix}-k8s-resources"
+  name                = azurerm_kubernetes_cluster.aks.name
+  resource_group_name = azurerm_resource_group.main-rg.name
 }
 
 resource "local_file" "foo" {
-  content  = azurerm_kubernetes_cluster.example.kube_config_raw
+  content  = azurerm_kubernetes_cluster.aks.kube_config_raw
   filename = "${path.module}/kubeconfig"
-}
+}*/

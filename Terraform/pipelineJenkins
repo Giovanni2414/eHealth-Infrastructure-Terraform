@@ -1,0 +1,55 @@
+pipeline {
+    agent {
+        label 'Docker-Host'
+    }
+    environment {
+        ACR_FrontendUser = credentials('ACR-FrontendUser')
+        ACR_FrontendPass = credentials('ACR-FrontendPass')
+    }
+    stages {
+        stage('Clone repository') {
+            steps {
+                git url:'https://github.com/Giovanni2414/eHealth-Frontend.git', branch: 'master'
+            }
+        }
+        stage('Unit testing') {
+            steps {
+                sh 'npx mocha test.js'
+            }
+        }
+        stage('Sonarqube testing') {
+            environment {
+                scannerHome = tool 'sonar4.7'
+            }
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=jenkinsKeyFront \
+                    -Dsonar.projectName=eHealthIcesi-Frontend \
+                    -Dsonar.projectVersion=1.0 \
+                    -Dsonar.sources=./ \\
+                    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                    '''
+                }
+            }
+        }
+        stage('Quality gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage('Docker build') {
+            steps {
+                sh 'docker build -t icesi-health-frontend:latest ./'
+            }
+        }
+        stage('Push image to ACR') {
+            steps {
+                sh 'az acr login --name $ACR_FrontendUser -u $ACR_FrontendUser -p $ACR_FrontendPass'
+                sh 'docker tag icesi-health-frontend:latest azrk8s.azurecr.io/samples/icesi-health-frontend:latest'
+                sh 'docker push azrk8s.azurecr.io/samples/icesi-health-frontend:latest'
+            }
+        }
+    }
+}
