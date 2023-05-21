@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mi-couchdb
+  namespace: icesi-health
+  labels:
+    app: mi-couchdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mi-couchdb
+  template:
+    metadata:
+      labels:
+        app: mi-couchdb
+    spec:
+      containers:
+      - name: mi-couchdb
+        image: azrk8s.azurecr.io/samples/icesidb
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5984
+        env:
+          - name: COUCHDB_USER
+            value: "root"
+          - name: COUCHDB_PASSWORD
+            value: "icesi-pass"
+        
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mi-couchdb
+  namespace: icesi-health
+spec:
+  selector:
+    app: mi-couchdb
+  ports:
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984
+  type: ClusterIP
